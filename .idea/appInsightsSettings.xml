@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.phonely" />
+                  <option name="mobileSdkAppId" value="1:444403482206:android:9b3d483c529e752bab7ecf" />
+                  <option name="projectId" value="phonely-app" />
+                  <option name="projectNumber" value="444403482206" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

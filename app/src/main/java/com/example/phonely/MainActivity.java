@@ -1,28 +1,19 @@
 package com.example.phonely;
 
-import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
+import android.os.Bundle;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.phonely.PhoneAdapter;     // Your custom adapter
-import com.example.phonely.PhoneModel;         // Your phone model class
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     RecyclerView phonesRecyclerView;
@@ -44,29 +35,54 @@ public class MainActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.topAppBar);
         toolbar.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.action_profile) {
-                startActivity(new Intent(this, LoginActivity.class));
+                boolean isLoggedIn = getSharedPreferences("PhonelyPrefs", MODE_PRIVATE)
+                        .getBoolean("isLoggedIn", false);
+
+                if (isLoggedIn) {
+                    fetchUserProfileAndOpenProfileActivity();
+                } else {
+                    startActivity(new Intent(this, LoginActivity.class));
+                }
                 return true;
             }
             return false;
         });
 
-        database = FirebaseDatabase.getInstance();
-        phoneRef = database.getReference("phones");
+        // TODO: Load phones here from Firebase if needed
+    }
 
-        phoneRef.addValueEventListener(new ValueEventListener() {
+    private void fetchUserProfileAndOpenProfileActivity() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : null;
+
+        if (userId == null) {
+            Toast.makeText(this, "User not found!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DatabaseReference userRef = FirebaseDatabase.getInstance(
+                        "https://phonely-app-default-rtdb.asia-southeast1.firebasedatabase.app/")
+                .getReference("users")
+                .child(userId);
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                phoneList.clear();
-                for (DataSnapshot phoneSnap : snapshot.getChildren()) {
-                    PhoneModel phone = phoneSnap.getValue(PhoneModel.class);
-                    phoneList.add(phone);
+            public void onDataChange(DataSnapshot snapshot) {
+                String profileUrl = "";
+                if (snapshot.exists() && snapshot.child("profileUrl").exists()) {
+                    profileUrl = snapshot.child("profileUrl").getValue(String.class);
                 }
-                adapter.notifyDataSetChanged();
+
+                Intent intent = new Intent(MainActivity.this, ProfileActivity.class);
+                intent.putExtra("profileUrl", profileUrl);
+                startActivity(intent);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(CustomerMainActivity.this, "Error loading phones", Toast.LENGTH_SHORT).show();
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(MainActivity.this, "Failed to load profile", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
             }
         });
     }
