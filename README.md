@@ -1,1 +1,2 @@
-# Mobile_App
+# Mobile_App (Phonely)
+A phone selling application
